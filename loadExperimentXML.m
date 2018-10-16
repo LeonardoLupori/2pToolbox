@@ -16,6 +16,7 @@ function [generalInfo sequence] = loadExperimentXML(pathToXML)
 % frame, voltage recordings and some meta-data)
 % 
 % Created by: Leonardo Lupori 06/04/2018
+% Last edited: Leonardo Lupori 21/07/2018
 
 % Load the XML as a struct
 s = xml2struct(pathToXML);
@@ -24,29 +25,53 @@ s = xml2struct(pathToXML);
 % General info
 generalInfo.general.PrairieViewVersion = s.PVScan.Attributes.version;
 generalInfo.general.experimentDate = s.PVScan.Attributes.date;
-% Scansion info
-generalInfo.scansion.dwellTime_us = str2double(s.PVScan.PVStateShard.PVStateValue{6}.Attributes.value);
-generalInfo.scansion.laserWavelength = str2double(s.PVScan.PVStateShard.PVStateValue{10}.IndexedValue.Attributes.value);
-generalInfo.scansion.scanningMode = s.PVScan.PVStateShard.PVStateValue{1}.Attributes.value;
-generalInfo.scansion.startPositionZ = str2double(s.PVScan.PVStateShard.PVStateValue{22}.SubindexedValues.SubindexedValue.Attributes.value);
-% Optics info
-generalInfo.optics.objectiveLens = s.PVScan.PVStateShard.PVStateValue{16}.Attributes.value;
-generalInfo.optics.objectiveLensMag = str2double(s.PVScan.PVStateShard.PVStateValue{17}.Attributes.value);
-generalInfo.optics.objectiveLensNA = str2double(s.PVScan.PVStateShard.PVStateValue{18}.Attributes.value);
-generalInfo.optics.opticalZoom = str2double(s.PVScan.PVStateShard.PVStateValue{19}.Attributes.value);
-% Image info
-generalInfo.image.micronsPerPixelX = str2double(s.PVScan.PVStateShard.PVStateValue{14}.IndexedValue{1}.Attributes.value);
-generalInfo.image.micronsPerPixelY = str2double(s.PVScan.PVStateShard.PVStateValue{14}.IndexedValue{2}.Attributes.value);
-generalInfo.image.pixelsPerLine = str2double(s.PVScan.PVStateShard.PVStateValue{20}.Attributes.value);
-generalInfo.image.linesPerFrame = str2double(s.PVScan.PVStateShard.PVStateValue{12}.Attributes.value);
-generalInfo.image.rotation = str2double(s.PVScan.PVStateShard.PVStateValue{26}.Attributes.value);
-% PMTs info
-activity = str2double(s.PVScan.PVStateShard.PVStateValue{21}.IndexedValue{2}.Attributes.index);
-generalInfo.pmt.greenPMT_isActive = logical(activity);
-generalInfo.pmt.greenPMT_power = str2double(s.PVScan.PVStateShard.PVStateValue{21}.IndexedValue{2}.Attributes.value);
-activity = str2double(s.PVScan.PVStateShard.PVStateValue{21}.IndexedValue{1}.Attributes.index);
-generalInfo.pmt.redPMT_isActive = logical(activity);
-generalInfo.pmt.redPMT_power = str2double(s.PVScan.PVStateShard.PVStateValue{21}.IndexedValue{1}.Attributes.value);
+
+
+stateValues = s.PVScan.PVStateShard.PVStateValue;
+for i = 1:size(stateValues,2) % Cycle trhough all the state values and load some
+    key = stateValues{i}.Attributes.key;
+    switch key
+        % SCANSION related fields
+        case 'activeMode'
+            generalInfo.scansion.scanningMode = stateValues{i}.Attributes.value;
+        case 'bitDepth'
+            generalInfo.scansion.bitDepth = str2double(stateValues{i}.Attributes.value);
+        case 'dwellTime'
+            generalInfo.scansion.dwellTime = str2double(stateValues{i}.Attributes.value);
+        case 'positionCurrent'
+            subValues = stateValues{i}.SubindexedValues;
+            generalInfo.scansion.startPositionZ = str2double(subValues.SubindexedValue.Attributes.value);
+        case 'laserWavelength'
+            generalInfo.scansion.laserWavelength = str2double(stateValues{i}.IndexedValue.Attributes.value);
+        case 'laserPower'
+            generalInfo.scansion.laserPower = str2double(stateValues{i}.IndexedValue.Attributes.value);
+        % OPTICS related fields
+        case 'objectiveLens'
+            generalInfo.optics.objectiveLens = stateValues{i}.Attributes.value;
+        case 'objectiveLensMag'
+            generalInfo.optics.objectiveLensMag = str2double(stateValues{i}.Attributes.value);
+        case 'objectiveLensNA'
+            generalInfo.optics.objectiveLensNA = str2double(stateValues{i}.Attributes.value);
+        case 'opticalZoom'
+            generalInfo.optics.opticalZoom = str2double(stateValues{i}.Attributes.value);
+        % IMAGE related fields
+        case 'micronsPerPixel'
+            generalInfo.image.micronsPerPixelX = str2double(stateValues{i}.IndexedValue{1}.Attributes.value);
+            generalInfo.image.micronsPerPixelX = str2double(stateValues{i}.IndexedValue{2}.Attributes.value);
+        case 'pixelsPerLine'
+            generalInfo.image.pixelsPerLine = str2double(stateValues{i}.Attributes.value);
+        case 'linesPerFrame'
+            generalInfo.image.linesPerFrame = str2double(stateValues{i}.Attributes.value);
+        case 'rotation'
+            generalInfo.image.rotation = str2double(stateValues{i}.Attributes.value);
+        % PMT related fields
+        case 'pmtGain'
+            generalInfo.pmt.greenPMT_power = str2double(stateValues{i}.IndexedValue{2}.Attributes.value);
+            generalInfo.pmt.greenPMT_isActive = logical(generalInfo.pmt.greenPMT_power);
+            generalInfo.pmt.redPMT_power = str2double(stateValues{i}.IndexedValue{1}.Attributes.value);
+            generalInfo.pmt.redPMT_isActive = logical(generalInfo.pmt.redPMT_power);
+    end
+end
 
 %%% EXTRACT INFORMATION ON THE IMAGE FILES
 
