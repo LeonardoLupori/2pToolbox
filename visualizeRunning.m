@@ -9,3 +9,7 @@ if FilterIndex ~= 0
     ax.XLabel.String = 'Time [s]';
     ax.YLabel.String = 'Distance run [cm]';
 end
+
+%%
+
+
