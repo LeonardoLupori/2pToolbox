@@ -1,5 +1,8 @@
 function [logicalList names] = findSubfolders(folderPath, subfolderString)
-% logicalList = findSubfolders(folderPath, subfolderString)
+
+% [logicalList names] = findSubfolders(folderPath, subfolderString)
+% Leonardo Lupori - 2018
+
 
 content = struct2table(dir(folderPath));
 indexes = regexpi(content.name,subfolderString);

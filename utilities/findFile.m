@@ -1,6 +1,7 @@
 function [logicalList names] = findFile(folderPath,fileSubString)
-% [logicalList names] = findFile(folderPath,fileSubString)
 
+% [logicalList names] = findFile(folderPath,fileSubString)
+%  Leonardo Lupori - 2018
 
 content = struct2table(dir(folderPath));
 indexes = regexpi(content.name,fileSubString);
