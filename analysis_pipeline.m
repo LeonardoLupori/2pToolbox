@@ -1,5 +1,5 @@
 clearvars, clc
-addpath(genpath('C:\Users\Leonardo Lupori\Documents\MATLAB\2pToolbox'))
+addpath(genpath('C:\Users\Leonardo\Documents\MATLAB\2pToolbox'))
  
 %% Get 3 files (fluorescence data, imaging info, voltage recording)
 
@@ -15,7 +15,7 @@ framesTime = [sequenceInfo.frame.relativeTime]';
 % Voltge recording
 [FileName,PathName,FilterIndex] = uigetfile('*.csv','Select Voltage trace CSV file',PathName);
 [channels, voltageTime] = loadVoltageCSV([PathName FileName]);
-decodedTrace = voltageDecoder(channels, 2);
+decodedTrace = voltageDecoder(channels(:,1:6), 2);
 stimulus = stimulusToImage_sync(decodedTrace, voltageTime, framesTime);
 
 %% (Optional) QC plotting
@@ -36,6 +36,7 @@ title('Voltage to frames alignment')
 ylim([-1 max(stimulus)+1])
 xlim([0 framesTime(end)])
 xlabel('Time (s)'),ylabel('Conditions')
+addToolbarExplorationButtons(gcf) % Adds buttons to figure toolbar
 
 %% Preprocessing
 data.stimulus = stimulus;
@@ -49,13 +50,17 @@ data.validCells = find([dat.stat.iscell]==1);
 data.correctedTraces = data.rawF - (data.neuropilF .* data.npCoeff);
 
 % Deta F over F
-
 % data.dFoF = dfof_movQuantile(data.correctedTraces, 101, 0.1);    % moving quantile
 data.dFoF = dfof_gauss(data.correctedTraces,1000);    % gaussian version
 
 %% (Optional) QC plotting
 
 cellInspector(data)
+
+
+
+
+
 
 
 
