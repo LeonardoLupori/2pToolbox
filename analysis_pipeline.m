@@ -17,6 +17,14 @@ framesTime = [sequenceInfo.frame.relativeTime]';
 [channels, voltageTime] = loadVoltageCSV([PathName FileName]);
 decodedTrace = voltageDecoder(channels(:,1:6), 2);
 stimulus = stimulusToImage_sync(decodedTrace, voltageTime, framesTime);
+% Running trace
+smoothingWindow = 0.5; % (seconds) to reduce electrical noise
+factor = smoothingWindow/mean(diff(voltageTime));
+if mod(factor,2)==0
+    factor = factor+1;
+end
+running = smooth(buildPosition(channels(:,8),'cm',6),factor);
+running = interp1(voltageTime,running,framesTime);
 
 %% (Optional) QC plotting
 if exist('fAlign','var') && ishandle(fAlign)

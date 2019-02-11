@@ -91,7 +91,7 @@ standardPostStim = postStimLength == mode(postStimLength);
 if ~all(standardPostStim)
     toAdjust = find(standardPostStim~=1);
     for i = 1:length(toAdjust)
-        trialLimits(toAdjust(i),1) = startOfStim(toAdjust(i)) + mode(postStimLength) -1;
+        trialLimits(toAdjust(i),2) = startOfStim(toAdjust(i)) + mode(postStimLength) -1;
         if strcmpi(correctionsMode,'verbose')
             warning('Trial %i/%i (code=%i) corrected for postStim length: from %i to %i frames.',...
                 toAdjust(i), size(startOfStim,1), code,...
