@@ -2,11 +2,11 @@ clearvars, clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% USER PARAMETERS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-resizeFactor = 1;                   % image downsampling
-crop = 1;                           % logical. Crop or not the movie
+resizeFactor = 0.5;                   % image downsampling
+crop = 0;                           % logical. Crop or not the movie
 croppedResolution = [600 700];      % size of the square crop (HxW)
 framesBracket = [0.1, 0.9];         % first and last frame (normalized to total length to 0:1) where to get random imgs
-nImages = 50;                       % number of images to export
+nImages = 200;                       % number of images to export
 startPath = 'D:\PizzorussoLAB\proj_Fasting\exp_acuity-2P\2P_data\prove\g2\';
 
 
@@ -53,7 +53,7 @@ for i = 1:size(frames,2)
     if crop
         temp = temp(pos(2):pos(2)+pos(4)-1, pos(1):pos(1)+pos(3)-1);
     end
-    imwrite(temp,[imName '.jpg'],'jpg')
+    imwrite(temp,[selpath filesep imName '_' num2str(i) '.jpg'],'jpg')
 end
 
 
