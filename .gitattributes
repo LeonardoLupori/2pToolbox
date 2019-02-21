@@ -15,3 +15,5 @@
 *.pdf -crlf -diff -merge
 *.jpg -crlf -diff -merge
 *.png -crlf -diff -merge
+*.skb -crlf -diff -merge
+*.skp -crlf -diff -merge
