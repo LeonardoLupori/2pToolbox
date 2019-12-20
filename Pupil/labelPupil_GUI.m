@@ -11,6 +11,10 @@ if exist('handles','var') && isfield(handles,'f') && ishandle(handles.f)
 end
 handles.f = figure('Position',[338 89 1180 887],'Name','Pupil Labeler');
 handles.ax = axes('Parent',handles.f,'DataAspectRatio',[1 1 1],'DataAspectRatioMode','manual');
+handles.p = uipanel(handles.f,'Position',[0.85 0.80 0.13 0.15],'Title','Commands');
+tx = sprintf('A: previous img\nD: next img\nP: draw pupil\nB: Flag as blink\nR: flag as rejected\nF12: Save DB');
+uicontrol(handles.p, 'Style','text', 'String',tx,'Units','normalized','Position',[.1 .05 .8 .93],...
+    'HorizontalAlignment','left')
 
 % Load parameters from the DB file
 handles.f.UserData.imageInd = userData.imageInd;

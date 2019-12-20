@@ -30,7 +30,7 @@ T = [userData.T; Tnew(newIndex,:)];
 % update variable to save
 userData.T = T;
 % Save variable
-[file,path,indx] = uiputfile('.mat','Save Pupil labeling file.',['pupilDB_' datestr(now,'YYYYMMDD_hhmm')]);
+[file,path,indx] = uiputfile('.mat','Save Pupil labeling file.',['pupilDB_' datestr(now,'YYYYmmDD_hhMM')]);
 if indx ~= 0
     save([path filesep file],'userData')
     disp(['Data saved in : ' path filesep file])
