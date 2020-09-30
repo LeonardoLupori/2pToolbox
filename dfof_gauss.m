@@ -18,6 +18,10 @@ options = statset('MaxIter',iterations);
 
 dFoF = zeros(size(traces));
 for i=1:size(traces,2)
+    if std(traces(:,i))==0
+        dFoF(:,i) = zeros(size(traces(:,i)));
+        continue
+    end
     try
         gmmodel = fitgmdist(traces(:,i), 3, 'Options', options);
     catch ME

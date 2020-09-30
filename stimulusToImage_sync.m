@@ -11,6 +11,10 @@ function syncStimTrace = stimulusToImage_sync(stimuliTrace, voltageTime, framesT
 
 syncStimTrace = zeros(size(framesTime));
 for i=1:length(framesTime)
+    if i==length(framesTime) && voltageTime(i)<framesTime(i)
+        syncStimTrace(i) = stimuliTrace(end);
+        continue
+    end
     ind = find(voltageTime >= framesTime(i),1,'first');
     syncStimTrace(i) = stimuliTrace(ind);
 end

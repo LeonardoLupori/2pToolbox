@@ -13,7 +13,7 @@ function trialLimits = divideTrials(stimulusTrace, code, correctionsMode, preSti
 % code). Trials begin at the last "preStimCode" found going backwards from
 % the start of the stimulation. Trials end at the last "code" found after
 % the start of the stmulation.
-% 
+% 1
 % OUTPUTS: 
 % trialLimits: a n-by-3 matrix containing the indices for the
 % beginning, the end and the stimulus onset frames of every trial

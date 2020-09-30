@@ -1,4 +1,10 @@
+
+
 startPath = 'C:\Users\Leonardo\Documents\MATLAB\2pToolbox\Pupil\';
+
+
+
+% LOAD a Database .mat file containing images and labels up to date
 [file,path,indx] = uigetfile([startPath '*.mat'],'Load a Pupil DB file');
 if indx == 0
     disp('Aborted by user.')
@@ -6,9 +12,14 @@ if indx == 0
 else
     load([path filesep file])
 end
+
+% Close the figure if it already exist 
+% (avoid duplicate figures on repeated calls of this script)
 if exist('handles','var') && isfield(handles,'f') && ishandle(handles.f)
     close(handles.f);
 end
+
+% Create the figure and adjust axes and location
 handles.f = figure('Position',[338 89 1180 887],'Name','Pupil Labeler');
 handles.ax = axes('Parent',handles.f,'DataAspectRatio',[1 1 1],'DataAspectRatioMode','manual');
 handles.p = uipanel(handles.f,'Position',[0.85 0.80 0.13 0.15],'Title','Commands');
@@ -27,11 +38,12 @@ imData = imread([handles.f.UserData.selPath filesep handles.f.UserData.T.imageNa
 handles.img = imshow(imData,'Parent',handles.ax,'InitialMagnification',150,'Border','loose');
 hold on
 if ~isempty(handles.f.UserData.T.pupilMask{ind})
-    handles.msk = imshow(handles.f.UserData.T.pupilMask{ind},'Parent',handles.ax);
-    handles.msk.AlphaData = 0.1;
+%     handles.msk = imshow(handles.f.UserData.T.pupilMask{ind},'Parent',handles.ax);
+%     handles.msk.AlphaData = 0.1;
+    handles.img.CData = imoverlay(imData,handles.f.UserData.T.pupilMask{ind} > 128 ,'yellow');
 else
-    handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
-    handles.msk.AlphaData = 0;
+%     handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
+%     handles.msk.AlphaData = 0;
 end
 hold off
 title(handles.ax,['File: ' handles.f.UserData.T.imageName{ind}],'Interpreter','none')
@@ -49,7 +61,7 @@ switch key
         handles.f.UserData.imageInd = indexManager(handles,'-');
         updateImages(handles)
     case 'p'
-        handles.msk.AlphaData = 0;
+%         handles.msk.AlphaData = 0;
         handles.f.UserData.currEllipse = drawellipse('FaceAlpha',0.05,...
             'Color','r',...
             'Parent',handles.ax);
@@ -88,14 +100,16 @@ imData = imread([handles.f.UserData.selPath filesep T.imageName{ind}]);
 handles.img.CData = imData;
 handles.ax.Title.String = [sprintf('File(%i/%i): ',ind,size(T,1)) T.imageName{ind}];
 if ~isempty(T.pupilMask{ind})
-    hold on
-    handles.msk.CData = cat(3,zeros([size(T.pupilMask{ind}),2],'uint8'),T.pupilMask{ind});
-    handles.msk.AlphaData = 0.1;
-    hold off
+%     hold on
+%     handles.msk.CData = cat(3,zeros([size(T.pupilMask{ind}),2],'uint8'),T.pupilMask{ind});
+%     handles.msk.AlphaData = 0.1;
+%     hold off
+    handles.img.CData = imoverlay(imData ,T.pupilMask{ind} > 128 ,'yellow');
 else
-    handles.msk.CData = zeros(size(imData),'uint8');
-    handles.msk.AlphaData = 0;
+%     handles.msk.CData = zeros(size(imData),'uint8');
+%     handles.msk.AlphaData = 0;
 end
+
 blinkTextHandle = handles.ax.Children.findobj('String','Blink');
 if T.blink(ind)
     handles.txB = text(0.01,0.05,'Blink','Color','g','FontSize',30,'Units','normalized');

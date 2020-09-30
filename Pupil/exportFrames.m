@@ -1,7 +1,10 @@
 %% USER PARAMETERS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clearvars, clc
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% -------------------------------------------------------------------------
+% USER PARAMETERS
+% -------------------------------------------------------------------------
+
 resizeFactor = 1;                   % image downsampling
 crop = 0;                           % logical. Crop or not the movie
 croppedResolution = [600 700];      % size of the square crop (HxW)
@@ -10,9 +13,9 @@ nImages = 300;                      % number of images to export
 forcedFrames = [33:36];             % frames that you want to force to be exported
 startPath = 'D:\PizzorussoLAB\proj_Fasting\exp_acuity-2P\2P_data\';
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% -------------------------------------------------------------------------
+% DO NOT EDIT PAST THIS POINT
+% -------------------------------------------------------------------------
 
 [file,path,indx] = uigetfile([startPath '*.avi'],'Select a pupil Movie');
 if indx==0
@@ -40,6 +43,7 @@ if selpath==0
     disp('Process aborted by user.')
     return
 end
+
 % Choose nImages frames randomly
 nFrames = v.Duration*v.FrameRate;
 from = ceil(framesBracket(1)*nFrames);
@@ -66,6 +70,6 @@ for i = 1:size(frames,2)
         temp = temp(pos(2):pos(2)+pos(4)-1, pos(1):pos(1)+pos(3)-1);
     end
     % Finally save the image
-    imwrite(temp,[selpath filesep imName '_' sprintf('%4.4i',i) '.jpg'],'jpg')
+    imwrite(temp,[selpath filesep imName '_' sprintf('%04u',i) '.jpg'],'jpg')
 end
 
