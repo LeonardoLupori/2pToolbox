@@ -1,8 +1,9 @@
-
-
+clearvars, clc
 startPath = 'C:\Users\Leonardo\Documents\MATLAB\2pToolbox\Pupil\';
 
-
+% -------------------------------------------------------------------------
+% DO NOT EDIT PAST THIS POINT
+% -------------------------------------------------------------------------
 
 % LOAD a Database .mat file containing images and labels up to date
 [file,path,indx] = uigetfile([startPath '*.mat'],'Load a Pupil DB file');
@@ -13,11 +14,16 @@ else
     load([path filesep file])
 end
 
-% Close the figure if it already exist 
+
+% Close the figures if they already exist
 % (avoid duplicate figures on repeated calls of this script)
 if exist('handles','var') && isfield(handles,'f') && ishandle(handles.f)
     close(handles.f);
 end
+if exist('handles','var') && isfield(handles,'fInstructions') && ishandle(handles.fInstructions)
+    close(handles.fInstructions);
+end
+
 
 % Create the figure and adjust axes and location
 screenSize = get(0,'ScreenSize');
@@ -26,26 +32,40 @@ pos = [screenSize(3)*relativeSize, screenSize(4)*relativeSize, ...
     screenSize(3)-(2*screenSize(3)*relativeSize),...
     screenSize(4)-(2*screenSize(4)*relativeSize)];
 
-% handles.f = figure('Position',[338 89 1180 887],'Name','Pupil Labeler');
 handles.f = figure('Position',pos,'Name','Pupil Labeler');
-
 handles.ax = axes('Parent',handles.f,'DataAspectRatio',[1 1 1],'DataAspectRatioMode','manual');
-handles.p = uipanel(handles.f,'Position',[0.85 0.80 0.13 0.18],'Title','Commands');
+
+
+% Create figure for instructions
+% instrWidth = screenSize(3) * 0.15;
+% instrHeight = screenSize(4) * 0.3;
+instrWidth = 250;
+instrHeight = 300;
+pos = [screenSize(3)-instrWidth, (screenSize(4)-instrHeight)/2,...
+    instrWidth, instrHeight];
+handles.fInstructions = figure('Position',pos, 'Name','Labeler Instructions',...
+    'NumberTitle','off','ToolBar','none','Color',[.9 1 .9]);
+handles.p = uipanel(handles.fInstructions,'Position',[0.05 0.05 0.9 0.9],...
+    'Title','Commands','FontSize',12,'FontWeight','bold');
 tx = sprintf(['A: previous img\n'...
     'D: next img\n'...
     'P: draw pupil\n'...
-    '\t Enter: confirm\n'...
-    '\t Canc: delete pupil\n'...
+    '    --> Enter: confirm\n'...
+    '    --> Canc: delete pupil\n'...
+    'G: draw glint\n'...
     'B: flag as blink\n'...
     'R: flag as rejected\n'...
     'F12: save DB']);
-uicontrol(handles.p, 'Style','text', 'String',tx,'Units','normalized','Position',[.1 .05 .8 .93],...
-    'HorizontalAlignment','left')
+uicontrol(handles.p, 'Style','text', 'String',tx,'Units','normalized',...
+    'Position',[.1 .05 .8 .93],'HorizontalAlignment','left','FontSize',11,...
+    'FontWeight','bold')
+
 
 % Load parameters from the DB file
 handles.f.UserData.imageInd = userData.imageInd;
 handles.f.UserData.T = userData.T;
 handles.f.UserData.selPath = userData.selPath;
+
 
 % Initialize plots and show the first image
 ind = handles.f.UserData.imageInd;
@@ -53,48 +73,73 @@ imData = imread([handles.f.UserData.selPath filesep handles.f.UserData.T.imageNa
 handles.img = imshow(imData,'Parent',handles.ax,'InitialMagnification',150,'Border','loose');
 hold on
 if ~isempty(handles.f.UserData.T.pupilMask{ind})
-%     handles.msk = imshow(handles.f.UserData.T.pupilMask{ind},'Parent',handles.ax);
-%     handles.msk.AlphaData = 0.1;
+    %     handles.msk = imshow(handles.f.UserData.T.pupilMask{ind},'Parent',handles.ax);
+    %     handles.msk.AlphaData = 0.1;
     handles.img.CData = imoverlay(imData,handles.f.UserData.T.pupilMask{ind} > 128 ,'yellow');
 else
-%     handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
-%     handles.msk.AlphaData = 0;
+    %     handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
+    %     handles.msk.AlphaData = 0;
 end
 hold off
 title(handles.ax,['File: ' handles.f.UserData.T.imageName{ind}],'Interpreter','none')
 handles.f.KeyPressFcn = {@keyParser,handles};
+handles.f.CloseRequestFcn = {@deleteAllFigures,handles};
+handles.fInstructions.CloseRequestFcn = {@deleteAllFigures,handles};
 
-% SUBFUNCTIONS
+% Set back focus on pupil figure
+figure(handles.f)
 
+% -------------------------------------------------------------------------
+% ---- SUBFUNCTIONS
+% -------------------------------------------------------------------------
 function keyParser(src,event,handles)
 key = event.Key;
 switch key
     case 'd'
         handles.f.UserData.imageInd = indexManager(handles,'+');
         updateImages(handles)
+        
     case 'a'
         handles.f.UserData.imageInd = indexManager(handles,'-');
         updateImages(handles)
+        
     case 'p'
-%         handles.msk.AlphaData = 0;
-        handles.f.UserData.currEllipse = drawellipse('FaceAlpha',0.05,...
-            'Color','r',...
+        handles.f.UserData.currPupilEllipse = drawellipse('FaceAlpha',0.05,...
+            'Color','y',...
             'Parent',handles.ax);
+        
     case 'delete'
         ind = handles.f.UserData.imageInd;
         if ~isempty(handles.f.UserData.T.pupilMask{ind})
             handles.f.UserData.T.pupilMask{ind} = [];
-            updateImages(handles)
         end
+        if ~isempty(handles.f.UserData.T.glintMask{ind})
+            handles.f.UserData.T.glintMask{ind} = [];
+        end
+        updateImages(handles)
+        
     case 'return'
-        if ~isempty(handles.f.UserData.currEllipse)
-            mask = createMask(handles.f.UserData.currEllipse,handles.img);
+        % Save the drawn ellipse for the Pupil
+        if isfield(handles.f.UserData,'currPupilEllipse') &&...
+                ~isempty(handles.f.UserData.currPupilEllipse) &&...
+                ishandle(handles.f.UserData.currPupilEllipse)
+            mask = createMask(handles.f.UserData.currPupilEllipse,handles.img);
             mask = uint8(mask*255);
             handles.f.UserData.T.pupilMask{handles.f.UserData.imageInd} = mask;
-            updateImages(handles)
         end
+        % Save the drawn ellipse for the Glint
+        if isfield(handles.f.UserData,'currGlintEllipse') &&...
+                ~isempty(handles.f.UserData.currGlintEllipse) &&...
+                ishandle(handles.f.UserData.currGlintEllipse)
+            mask = createMask(handles.f.UserData.currGlintEllipse,handles.img);
+            mask = uint8(mask*255);
+            handles.f.UserData.T.glintMask{handles.f.UserData.imageInd} = mask;
+        end
+        updateImages(handles)
+        
     case 'backspace'
         updateImages(handles)
+        
     case 'f12'
         [file,path,indx] = uiputfile('.mat','Save Pupil labeling file.',['pupilDB_' datestr(now,'YYYYmmDD_hhMM')]);
         if indx ~= 0
@@ -102,34 +147,48 @@ switch key
             save([path filesep file],'userData')
             disp(['Data saved in : ' path filesep file])
         end
+        
     case 'b'
         handles.f.UserData.T.blink(handles.f.UserData.imageInd) = ~handles.f.UserData.T.blink(handles.f.UserData.imageInd);
         updateImages(handles)
+        
     case 'r'
         handles.f.UserData.T.rejectedImg(handles.f.UserData.imageInd) = ~handles.f.UserData.T.rejectedImg(handles.f.UserData.imageInd);
-        updateImages(handles)   
+        updateImages(handles)
+        
+    case 'g'
+        handles.f.UserData.currGlintEllipse = drawellipse('FaceAlpha',0.05,...
+            'Color','b',...
+            'Parent',handles.ax);
+        
 end
 end
 
 function updateImages(handles)
 ind = handles.f.UserData.imageInd;
 T = handles.f.UserData.T;
-if isfield(handles.f.UserData,'currEllipse') && ishandle(handles.f.UserData.currEllipse)
-    delete(handles.f.UserData.currEllipse)
+
+% Deletes the interactive ellipses
+if isfield(handles.f.UserData,'currPupilEllipse') && ishandle(handles.f.UserData.currPupilEllipse)
+    delete(handles.f.UserData.currPupilEllipse)
 end
+if isfield(handles.f.UserData,'currGlintEllipse') && ishandle(handles.f.UserData.currGlintEllipse)
+    delete(handles.f.UserData.currGlintEllipse)
+end
+
 imData = imread([handles.f.UserData.selPath filesep T.imageName{ind}]);
 handles.img.CData = imData;
 handles.ax.Title.String = [sprintf('File(%i/%i): ',ind,size(T,1)) T.imageName{ind}];
+
+% Create image with overlays for visualization
 if ~isempty(T.pupilMask{ind})
-%     hold on
-%     handles.msk.CData = cat(3,zeros([size(T.pupilMask{ind}),2],'uint8'),T.pupilMask{ind});
-%     handles.msk.AlphaData = 0.1;
-%     hold off
-    handles.img.CData = imoverlay(imData ,T.pupilMask{ind} > 128 ,'yellow');
-else
-%     handles.msk.CData = zeros(size(imData),'uint8');
-%     handles.msk.AlphaData = 0;
+    imData = imoverlay(imData ,T.pupilMask{ind} > 128 ,'yellow');
 end
+if ~isempty(T.glintMask{ind})
+    imData = imoverlay(imData ,T.glintMask{ind} > 128 ,'blue');
+end
+handles.img.CData = imData;
+
 
 blinkTextHandle = handles.ax.Children.findobj('String','Blink');
 if T.blink(ind)
@@ -162,4 +221,15 @@ elseif index>size(T,1)
     index=1;
 end
 end
+
+% Deletes both figures at the same time
+function deleteAllFigures(~,~,handles)
+try
+    delete(handles.f)
+    delete(handles.fInstructions)
+catch ME
+end
+end
+
+
 
