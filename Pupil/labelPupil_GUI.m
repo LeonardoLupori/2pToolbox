@@ -4,6 +4,8 @@ startPath = 'C:\Users\Leonardo\Documents\MATLAB\2pToolbox\Pupil\';
 % -------------------------------------------------------------------------
 % DO NOT EDIT PAST THIS POINT
 % -------------------------------------------------------------------------
+handles.pupilTransparency = 0.15;
+handles.glintTransparency = 0.15;
 
 % LOAD a Database .mat file containing images and labels up to date
 [file,path,indx] = uigetfile([startPath '*.mat'],'Load a Pupil DB file');
@@ -70,17 +72,40 @@ handles.f.UserData.selPath = userData.selPath;
 % Initialize plots and show the first image
 ind = handles.f.UserData.imageInd;
 imData = imread([handles.f.UserData.selPath filesep handles.f.UserData.T.imageName{ind}]);
-handles.img = imshow(imData,'Parent',handles.ax,'InitialMagnification',150,'Border','loose');
-hold on
+handles.img = imshow(imadjust(imData),...
+    'Parent',handles.ax,...
+    'InitialMagnification',150,...
+    'Border','loose');
+hold(handles.ax,'on')
+
+% Pupil
+yellowImg = zeros([size(imData),3],'uint8');
+yellowImg(:,:,1:2) = 255;
+handles.pupilMsk = imshow(yellowImg,'Parent',handles.ax);
 if ~isempty(handles.f.UserData.T.pupilMask{ind})
-    %     handles.msk = imshow(handles.f.UserData.T.pupilMask{ind},'Parent',handles.ax);
-    %     handles.msk.AlphaData = 0.1;
-    handles.img.CData = imoverlay(imData,handles.f.UserData.T.pupilMask{ind} > 128 ,'yellow');
+    
+    handles.pupilMsk.AlphaData = handles.f.UserData.T.pupilMask{ind} * handles.pupilTransparency;
+    %     handles.img.CData = imoverlay(imData,handles.f.UserData.T.pupilMask{ind} > 128 ,'yellow');
 else
     %     handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
-    %     handles.msk.AlphaData = 0;
+    handles.pupilMsk.AlphaData = 0;
 end
-hold off
+
+% Glint
+blueImg = zeros([size(imData),3],'uint8');
+blueImg(:,:,3) = 255;
+handles.glintMsk = imshow(blueImg,'Parent',handles.ax);
+if ~isempty(handles.f.UserData.T.glintMask{ind})
+    
+    handles.glintMsk.AlphaData = handles.f.UserData.T.glintMask{ind} * handles.glintTransparency;
+    %     handles.img.CData = imoverlay(imData,handles.f.UserData.T.pupilMask{ind} > 128 ,'yellow');
+else
+    %     handles.msk = imshow(zeros(size(imData),'uint8'),'Parent',handles.ax);
+    handles.glintMsk.AlphaData = 0;
+end
+
+hold(handles.ax,'off')
+
 title(handles.ax,['File: ' handles.f.UserData.T.imageName{ind}],'Interpreter','none')
 handles.f.KeyPressFcn = {@keyParser,handles};
 handles.f.CloseRequestFcn = {@deleteAllFigures,handles};
@@ -145,7 +170,7 @@ switch key
         if indx ~= 0
             userData = handles.f.UserData;
             save([path filesep file],'userData')
-            disp(['Data saved in : ' path filesep file])
+            disp(['Data saved in : ' path file])
         end
         
     case 'b'
@@ -177,18 +202,49 @@ if isfield(handles.f.UserData,'currGlintEllipse') && ishandle(handles.f.UserData
 end
 
 imData = imread([handles.f.UserData.selPath filesep T.imageName{ind}]);
-handles.img.CData = imData;
+if all(size(imData) == size(handles.img.CData))
+    sameResolution = true;
+else
+    sameResolution = false;
+end
+
+if sameResolution
+    handles.img.CData = imadjust(imData);
+else
+    handles.img = imshow(imadjust(imData),...
+    'Parent',handles.ax,...
+    'InitialMagnification',150,...
+    'Border','loose');
+end
 handles.ax.Title.String = [sprintf('File(%i/%i): ',ind,size(T,1)) T.imageName{ind}];
+
+% Create new yellow and blue images if the resolution changed
+if ~sameResolution
+    hold(handles.ax,'on')
+    
+    yellowImg = zeros([size(imData),3],'uint8');
+    yellowImg(:,:,1:2) = 255;
+    handles.pupilMsk = imshow(yellowImg,'Parent',handles.ax);
+    
+    blueImg = zeros([size(imData),3],'uint8');
+    blueImg(:,:,3) = 255;
+    handles.glintMsk = imshow(blueImg,'Parent',handles.ax);
+
+    hold(handles.ax,'off')
+end
 
 % Create image with overlays for visualization
 if ~isempty(T.pupilMask{ind})
-    imData = imoverlay(imData ,T.pupilMask{ind} > 128 ,'yellow');
+    handles.pupilMsk.AlphaData = handles.f.UserData.T.pupilMask{ind} * handles.pupilTransparency;
+else
+    handles.pupilMsk.AlphaData = 0;
 end
-if ~isempty(T.glintMask{ind})
-    imData = imoverlay(imData ,T.glintMask{ind} > 128 ,'blue');
-end
-handles.img.CData = imData;
 
+if ~isempty(T.glintMask{ind})
+    handles.glintMsk.AlphaData = handles.f.UserData.T.glintMask{ind} * handles.glintTransparency;
+else
+    handles.glintMsk.AlphaData = 0;
+end
 
 blinkTextHandle = handles.ax.Children.findobj('String','Blink');
 if T.blink(ind)
