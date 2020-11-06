@@ -70,6 +70,6 @@ for i = 1:size(frames,2)
         temp = temp(pos(2):pos(2)+pos(4)-1, pos(1):pos(1)+pos(3)-1);
     end
     % Finally save the image
-    imwrite(temp,[selpath filesep imName '_' sprintf('%04u',i) '.jpg'],'jpg')
+    imwrite(temp,[selpath filesep imName '_' sprintf('%04u',i) '_' datestr(now, 'yyyymmddhhMMss') '.jpg'],'jpg')
 end
 

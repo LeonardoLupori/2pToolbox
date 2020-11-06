@@ -22,7 +22,9 @@ imageName = names;
 rejectedImg = zeros(length(names),1);
 blink = zeros(length(names),1);
 pupilMask = cell(length(names),1);
-Tnew = table(imageName,pupilMask,blink,rejectedImg,'VariableNames',{'imageName','pupilMask','blink','rejectedImg'});
+glintMask = cell(length(names),1);
+Tnew = table(imageName,pupilMask,blink,rejectedImg,...
+    'VariableNames',{'imageName','pupilMask','blink','rejectedImg','glintMask'});
 % only add files that were not already there
 [~, newIndex] = setdiff(Tnew(:,'imageName'),userData.T(:,'imageName'));
 T = [userData.T; Tnew(newIndex,:)];

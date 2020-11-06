@@ -4,6 +4,7 @@ startPath = 'C:\Users\Leonardo\Documents\MATLAB\2pToolbox\Pupil\';
 % -------------------------------------------------------------------------
 % DO NOT EDIT PAST THIS POINT
 % -------------------------------------------------------------------------
+global handles
 handles.pupilTransparency = 0.15;
 handles.glintTransparency = 0.15;
 
@@ -107,7 +108,7 @@ end
 hold(handles.ax,'off')
 
 title(handles.ax,['File: ' handles.f.UserData.T.imageName{ind}],'Interpreter','none')
-handles.f.KeyPressFcn = {@keyParser,handles};
+handles.f.KeyPressFcn = @keyParser;
 handles.f.CloseRequestFcn = {@deleteAllFigures,handles};
 handles.fInstructions.CloseRequestFcn = {@deleteAllFigures,handles};
 
@@ -117,16 +118,17 @@ figure(handles.f)
 % -------------------------------------------------------------------------
 % ---- SUBFUNCTIONS
 % -------------------------------------------------------------------------
-function keyParser(src,event,handles)
+function keyParser(src,event)
+global handles
 key = event.Key;
 switch key
     case 'd'
         handles.f.UserData.imageInd = indexManager(handles,'+');
-        updateImages(handles)
+        updateImages
         
     case 'a'
         handles.f.UserData.imageInd = indexManager(handles,'-');
-        updateImages(handles)
+        updateImages
         
     case 'p'
         handles.f.UserData.currPupilEllipse = drawellipse('FaceAlpha',0.05,...
@@ -141,7 +143,7 @@ switch key
         if ~isempty(handles.f.UserData.T.glintMask{ind})
             handles.f.UserData.T.glintMask{ind} = [];
         end
-        updateImages(handles)
+        updateImages
         
     case 'return'
         % Save the drawn ellipse for the Pupil
@@ -160,10 +162,10 @@ switch key
             mask = uint8(mask*255);
             handles.f.UserData.T.glintMask{handles.f.UserData.imageInd} = mask;
         end
-        updateImages(handles)
+        updateImages
         
     case 'backspace'
-        updateImages(handles)
+        updateImages
         
     case 'f12'
         [file,path,indx] = uiputfile('.mat','Save Pupil labeling file.',['pupilDB_' datestr(now,'YYYYmmDD_hhMM')]);
@@ -175,11 +177,11 @@ switch key
         
     case 'b'
         handles.f.UserData.T.blink(handles.f.UserData.imageInd) = ~handles.f.UserData.T.blink(handles.f.UserData.imageInd);
-        updateImages(handles)
+        updateImages
         
     case 'r'
         handles.f.UserData.T.rejectedImg(handles.f.UserData.imageInd) = ~handles.f.UserData.T.rejectedImg(handles.f.UserData.imageInd);
-        updateImages(handles)
+        updateImages
         
     case 'g'
         handles.f.UserData.currGlintEllipse = drawellipse('FaceAlpha',0.05,...
@@ -189,7 +191,8 @@ switch key
 end
 end
 
-function updateImages(handles)
+function updateImages
+global handles
 ind = handles.f.UserData.imageInd;
 T = handles.f.UserData.T;
 
@@ -217,6 +220,7 @@ else
     'Border','loose');
 end
 handles.ax.Title.String = [sprintf('File(%i/%i): ',ind,size(T,1)) T.imageName{ind}];
+handles.ax.Title.Interpreter = 'none';
 
 % Create new yellow and blue images if the resolution changed
 if ~sameResolution
