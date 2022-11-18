@@ -1,4 +1,4 @@
-function trialLimits = divideTrials(stimulusTrace, code, correctionsMode, preStimCode)
+function trialLimits = divideTrials(stimulusTrace, code, correctionsMode, preStimCode, forcePreStimLength, forcePostStimLength)
 % 
 % trialLimits = divideTrials(stimulusTrace, code)
 % trialLimits = divideTrials(stimulusTrace, code, correctionsMode)
@@ -29,14 +29,24 @@ function trialLimits = divideTrials(stimulusTrace, code, correctionsMode, preSti
 % gray).
 % 
 %  Leonardo Lupori 07-Feb-2019
+
 if nargin<3
     correctionsMode = 'verbose';
     preStimCode = 1;
+    forcePreStimLength = []; 
+    forcePostStimLength = [];
 elseif nargin <4
     preStimCode = 1;
     if ~any(strcmpi(correctionsMode,{'verbose','silent'}))
         error('correctionsMode must be either "verbose" or "silent"')
     end
+    forcePreStimLength = [];
+    forcePostStimLength = [];
+elseif nargin <5
+    forcePreStimLength = [];
+    forcePostStimLength = [];
+elseif nargin <6
+    forcePostStimLength = [];
 end
 
 temp = diff(stimulusTrace == code);
@@ -71,31 +81,43 @@ preStimLength = startOfStim-trialLimits(:,1);
 postStimLength = trialLimits(:,2)-startOfStim+1;
 
 % Check for trials with strange preStim length (preStim different from the mode)
-standardPreStim = preStimLength == mode(preStimLength);
+if isempty(forcePreStimLength)
+    preStimToBeEnforced = mode(preStimLength);
+else
+    preStimToBeEnforced = forcePreStimLength;
+end
+standardPreStim = preStimLength == preStimToBeEnforced;
+
 % If present, correct those trials
 if ~all(standardPreStim)
     toAdjust = find(standardPreStim~=1);
     for i = 1:length(toAdjust)
-        trialLimits(toAdjust(i),1) = startOfStim(toAdjust(i)) - mode(preStimLength);
+        trialLimits(toAdjust(i),1) = startOfStim(toAdjust(i)) - preStimToBeEnforced;
         if strcmpi(correctionsMode,'verbose')
             warning('Trial %i/%i (code=%i) corrected for preStim length: from %i to %i frames.',...
                 toAdjust(i), size(startOfStim,1), code,...
-                preStimLength(toAdjust(i)), mode(preStimLength))
+                preStimLength(toAdjust(i)), preStimToBeEnforced)
         end
     end
 end
 
 % Check for trials with strange postStim length (postStim different from the mode)
-standardPostStim = postStimLength == mode(postStimLength);
+if isempty(forcePostStimLength)
+    postStimToBeEnforced = mode(postStimLength);
+else
+    postStimToBeEnforced = forcePostStimLength;
+end
+standardPostStim = postStimLength == postStimToBeEnforced;
+
 % If present, correct those trials
 if ~all(standardPostStim)
     toAdjust = find(standardPostStim~=1);
     for i = 1:length(toAdjust)
-        trialLimits(toAdjust(i),2) = startOfStim(toAdjust(i)) + mode(postStimLength) -1;
+        trialLimits(toAdjust(i),2) = startOfStim(toAdjust(i)) + postStimToBeEnforced -1;
         if strcmpi(correctionsMode,'verbose')
             warning('Trial %i/%i (code=%i) corrected for postStim length: from %i to %i frames.',...
                 toAdjust(i), size(startOfStim,1), code,...
-                postStimLength(toAdjust(i)), mode(postStimLength))
+                postStimLength(toAdjust(i)), postStimToBeEnforced)
         end
     end
 end

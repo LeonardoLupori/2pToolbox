@@ -15,12 +15,15 @@ end
 baselines = 0:offset:offset*(size(traces,2)-1);
 offsetTraces = bsxfun(@plus, traces, baselines);
 h = plot(offsetTraces);
-line(repmat([0; size(traces,1)],1,size(traces,2)),repmat(baselines,2,1),...
-    'color','k');
-uistack(h,'top')
+yline(baselines)
+% line(repmat([0; size(traces,1)],1,size(traces,2)),repmat(baselines,2,1),...
+%     'color','k');
+uistack(h,'top');
 
 % Plot customization
-xlim([0 length(traces)])
-ylim([-offset max(offsetTraces(:,end)+offset)])
+xlim([-200 length(traces)]);
+ylim([-offset max(offsetTraces(:,end)+offset)]);
+
+text(repmat(-100,length(baselines),1), baselines, string(1:size(traces,2)), 'FontWeight', 'normal', 'FontSize', 12)
 
 

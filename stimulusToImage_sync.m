@@ -11,10 +11,16 @@ function syncStimTrace = stimulusToImage_sync(stimuliTrace, voltageTime, framesT
 
 syncStimTrace = zeros(size(framesTime));
 for i=1:length(framesTime)
-    if i==length(framesTime) && voltageTime(i)<framesTime(i)
-        syncStimTrace(i) = stimuliTrace(end);
-        continue
-    end
+%     if i==length(framesTime) && voltageTime(i)<framesTime(end)
+%         syncStimTrace(i) = stimuliTrace(end);
+%         continue
+%     end
+    
     ind = find(voltageTime >= framesTime(i),1,'first');
-    syncStimTrace(i) = stimuliTrace(ind);
+    if isempty(ind)
+        warning('frame #%u was acquired later than last voltageTime. Assign the last stimulus code as default',i)
+        syncStimTrace(i) = syncStimTrace(i-1);
+    else
+        syncStimTrace(i) = stimuliTrace(ind);
+    end
 end

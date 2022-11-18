@@ -7,14 +7,12 @@ function dFoF = dfof_movQuantile(traces,n,q)
 % n: window size for the moving quantile (best if odd) (default: 101)
 % q: quantile to consider as f0 (default: 0.08)
 
-if nargin < 2
-    n = 101;
-    q = 0.08;
-elseif nargin <3
-    q = 0.08;
+arguments
+    traces
+    n = 101
+    q = 0.08
 end
 
-dFoF = zeros(size(traces));
 f0 = zeros(size(traces));
 
 for i=1:size(traces,2)
